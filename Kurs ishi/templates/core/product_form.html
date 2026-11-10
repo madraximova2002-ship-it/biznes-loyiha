@@ -1,0 +1,94 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="card form-card animate-fadeInUp">
+    <div class="card-header">
+        <h3 class="card-title">📋 {{ page_title }}</h3>
+    </div>
+    <div class="card-body">
+        <form method="post">
+            {% csrf_token %}
+            <div class="form-row">
+                <div class="form-group">
+                    <label class="form-label">SKU</label>
+                    {{ form.sku }}
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Nomi</label>
+                    {{ form.name }}
+                </div>
+            </div>
+            <div class="form-row">
+                <div class="form-group">
+                    <label class="form-label">Kategoriya</label>
+                    {{ form.category }}
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Yetkazib beruvchi</label>
+                    {{ form.supplier }}
+                </div>
+            </div>
+            <div class="form-row">
+                <div class="form-group">
+                    <label class="form-label">Narxi (so'm)</label>
+                    {{ form.price }}
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Tannarxi (so'm)</label>
+                    {{ form.cost_price }}
+                </div>
+            </div>
+            <div class="form-row">
+                <div class="form-group">
+                    <label class="form-label">Saqlash xarajati</label>
+                    {{ form.holding_cost }}
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Buyurtma xarajati</label>
+                    {{ form.ordering_cost }}
+                </div>
+            </div>
+            <div class="form-row">
+                <div class="form-group">
+                    <label class="form-label">Yetkazish muddati (kun)</label>
+                    {{ form.lead_time_days }}
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Minimal zaxira</label>
+                    {{ form.min_stock }}
+                </div>
+            </div>
+            <div class="form-row">
+                <div class="form-group">
+                    <label class="form-label">O'lchov birligi</label>
+                    {{ form.unit }}
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Yaroqlilik muddati</label>
+                    {{ form.expire_date }}
+                </div>
+            </div>
+            <div class="form-row">
+                <div class="form-group">
+                    <label class="form-label" style="display:flex; align-items:center; gap:8px;">
+                        {{ form.is_active }} Faol
+                    </label>
+                </div>
+            </div>
+            <div class="form-group">
+                <label class="form-label">Tavsif</label>
+                {{ form.description }}
+            </div>
+            {% for field in form %}
+            {% if field.errors %}
+            <div class="alert alert-error">{{ field.label }}: {{ field.errors.0 }}</div>
+            {% endif %}
+            {% endfor %}
+            <div class="flex gap-12" style="margin-top:24px;">
+                <button type="submit" class="btn btn-primary">💾 Saqlash</button>
+                <a href="{% url 'product_list' %}" class="btn btn-outline">← Bekor qilish</a>
+            </div>
+        </form>
+    </div>
+</div>
+{% endblock %}

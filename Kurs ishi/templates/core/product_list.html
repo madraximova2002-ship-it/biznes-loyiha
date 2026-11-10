@@ -1,0 +1,133 @@
+{% extends "base.html" %}
+{% load humanize %}
+{% load core_tags %}
+
+{% block content %}
+<div class="toolbar">
+    <div class="toolbar-left">
+        <form method="get" class="flex gap-12" style="flex-wrap:wrap;">
+            <div class="search-box">
+                <span class="search-icon">🔍</span>
+                <input type="text" name="q" value="{{ q }}" placeholder="Mahsulot qidirish (nomi yoki SKU)...">
+            </div>
+            <select name="category" class="filter-select" onchange="this.form.submit()">
+                <option value="">Barcha kategoriyalar</option>
+                {% for cat in categories %}
+                <option value="{{ cat.id }}" {% if selected_category_id == cat.id %}selected{% endif %}>{{ cat.name }}
+                </option>
+                {% endfor %}
+            </select>
+            <button type="submit" class="btn btn-outline btn-sm">Qidirish</button>
+        </form>
+    </div>
+    <div class="toolbar-right flex gap-12" style="align-items:center;">
+        {% if request.user|has_role:"admin,manager" %}
+        <form action="{% url 'product_import_excel' %}" method="post" enctype="multipart/form-data" class="flex gap-8"
+            style="align-items:center; margin:0;">
+            {% csrf_token %}
+            <input type="file" name="excel_file" accept=".xlsx" required style="font-size:12px; max-width:180px;">
+            <button type="submit" class="btn btn-outline btn-sm" style="border-color:var(--info); color:var(--info);"
+                title="Exceldan import qilish">📤 Import</button>
+        </form>
+        {% endif %}
+        <a href="{% url 'export_excel' %}?type=products" class="btn btn-outline btn-sm"
+            style="border-color:var(--success); color:var(--success);" title="Excelga yuklash">📥 Export</a>
+        {% if request.user|has_role:"admin,manager" %}
+        <a href="{% url 'product_create' %}" class="btn btn-primary btn-sm">+ Yangi</a>
+        {% endif %}
+    </div>
+</div>
+
+<div class="card animate-fadeInUp">
+    <div class="table-container">
+        <table class="data-table">
+            <thead>
+                <tr>
+                    <th>SKU</th>
+                    <th>Nomi</th>
+                    <th>Kategoriya</th>
+                    <th>Narxi</th>
+                    <th>Zaxira</th>
+                    <th>Min</th>
+                    <th>Holat</th>
+                    <th>Amallar</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for product in products %}
+                <tr>
+                    <td data-label="SKU"><code
+                            style="background:var(--bg-tertiary); padding:2px 8px; border-radius:4px; font-size:12px;">{{ product.sku }}</code>
+                    </td>
+                    <td data-label="Nomi">
+                        <a href="{% url 'product_detail' product.pk %}" style="font-weight:600;">{{ product.name|truncatechars:40 }}</a>
+                    </td>
+                    <td data-label="Kategoriya">{{ product.category.name|default:"-" }}</td>
+                    <td data-label="Birlik narxi">{{ product.price|floatformat:0|intcomma }} so'm</td>
+                    <td data-label="Umumiy qoldiq"><strong>{{ product.total_stock|intcomma }}</strong></td>
+                    <td data-label="Min">{{ product.min_stock }}</td>
+                    <td data-label="Holat">
+                        <span class="stock-dot {{ product.stock_status }}"></span>
+                        {% if product.stock_status == 'danger' %}
+                        <span class="badge badge-danger">Xavfli</span>
+                        {% elif product.stock_status == 'warning' %}
+                        <span class="badge badge-warning">Ogohlantirish</span>
+                        {% else %}
+                        <span class="badge badge-success">Normal</span>
+                        {% endif %}
+                    </td>
+                    <td data-label="Amallar">
+                        <div class="action-btns">
+                            <a href="{% url 'product_detail' product.pk %}" class="btn btn-ghost btn-sm"
+                                title="Batafsil">👁️</a>
+                            {% if request.user|has_role:"admin,manager" %}
+                            <a href="{% url 'product_edit' product.pk %}" class="btn btn-ghost btn-sm"
+                                title="Tahrirlash">✏️</a>
+                            {% endif %}
+                            {% if request.user|has_role:"admin" %}
+                            <form method="post" action="{% url 'product_delete' product.pk %}" style="display:inline;"
+                                onsubmit="return confirm('O\'chirmoqchimisiz?')">
+                                {% csrf_token %}
+                                <button type="submit" class="btn btn-ghost btn-sm text-danger"
+                                    title="O'chirish">🗑️</button>
+                            </form>
+                            {% endif %}
+                        </div>
+                    </td>
+                </tr>
+                {% empty %}
+                <tr>
+                    <td colspan="8">
+                        <div class="empty-state">
+                            <div class="icon">📋</div>
+                            <h3>Mahsulotlar topilmadi</h3>
+                            <a href="{% url 'product_create' %}" class="btn btn-primary mt-16">+ Yangi mahsulot</a>
+                        </div>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+
+    {% if products.has_other_pages %}
+    <div class="card-footer">
+        <div class="pagination">
+            {% if products.has_previous %}
+            <a href="?page={{ products.previous_page_number }}&q={{ q }}&category={{ selected_category }}">← Oldingi</a>
+            {% endif %}
+            {% for num in products.paginator.page_range %}
+            {% if products.number == num %}
+            <span class="current">{{ num }}</span>
+            {% elif num > products.number|add:'-3' and num < products.number|add:'3' %} <a
+                href="?page={{ num }}&q={{ q }}&category={{ selected_category }}">{{ num }}</a>
+                {% endif %}
+                {% endfor %}
+                {% if products.has_next %}
+                <a href="?page={{ products.next_page_number }}&q={{ q }}&category={{ selected_category }}">Keyingi →</a>
+                {% endif %}
+        </div>
+    </div>
+    {% endif %}
+</div>
+{% endblock %}

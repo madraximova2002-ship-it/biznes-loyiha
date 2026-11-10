@@ -1,0 +1,115 @@
+{% extends "base.html" %}
+{% load humanize %}
+{% load core_tags %}
+
+{% block content %}
+<div class="toolbar">
+    <div class="toolbar-left">
+        <form method="get" class="flex gap-12" style="flex-wrap:wrap;">
+            <select name="type" class="filter-select" onchange="this.form.submit()">
+                <option value="">Barcha turlar</option>
+                <option value="in" {% if selected_type == 'in' %}selected{% endif %}>Kirim</option>
+                <option value="out" {% if selected_type == 'out' %}selected{% endif %}>Chiqim</option>
+                <option value="transfer" {% if selected_type == 'transfer' %}selected{% endif %}>Transfer</option>
+            </select>
+            <select name="warehouse" class="filter-select" onchange="this.form.submit()">
+                <option value="">Barcha omborlar</option>
+                {% for wh in warehouses %}
+                <option value="{{ wh.id }}" {% if selected_warehouse_id == wh.id %}selected{% endif %}>{{ wh.name }}
+                </option>
+                {% endfor %}
+            </select>
+        </form>
+    </div>
+    <div class="toolbar-right flex gap-12">
+        <a href="{% url 'export_excel' %}?type=transactions" class="btn btn-outline"
+            style="border-color:var(--success); color:var(--success);">📥 Excel yuklash</a>
+        {% if request.user|has_role:"admin,manager" %}
+        <a href="{% url 'transaction_create' %}" class="btn btn-primary">+ Yangi tranzaksiya</a>
+        {% endif %}
+    </div>
+</div>
+
+<div class="card animate-fadeInUp">
+    <div class="table-container">
+        <table class="data-table">
+            <thead>
+                <tr>
+                    <th>Sana</th>
+                    <th>Turi</th>
+                    <th>Mahsulot</th>
+                    <th>Ombor</th>
+                    <th>Manzil</th>
+                    <th>Miqdor</th>
+                    <th>Birlik narx</th>
+                    <th>Jami</th>
+                    <th>Yaratuvchi</th>
+                    <th>Harakat</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for txn in transactions %}
+                <tr>
+                    <td data-label="Sana">{{ txn.created_at|date:"d.m.Y H:i" }}</td>
+                    <td data-label="Turi">
+                        {% if txn.transaction_type == 'in' %}
+                        <span class="badge badge-success">↓ Kirim</span>
+                        {% elif txn.transaction_type == 'out' %}
+                        <span class="badge badge-danger">↑ Chiqim</span>
+                        {% else %}
+                        <span class="badge badge-info">⇄ Transfer</span>
+                        {% endif %}
+                    </td>
+                    <td data-label="Mahsulot">{{ txn.product.name|truncatechars:30 }}</td>
+                    <td data-label="Ombor">{{ txn.warehouse.name }}</td>
+                    <td data-label="Manzil">{{ txn.target_warehouse.name|default:"-" }}</td>
+                    <td data-label="Miqdor"><strong>{{ txn.quantity|intcomma }}</strong></td>
+                    <td data-label="Birlik narxi">{{ txn.unit_price|floatformat:0|intcomma }}</td>
+                    <td data-label="Jami"><strong>{{ txn.total_price|floatformat:0|intcomma }} so'm</strong></td>
+                    <td data-label="Yaratuvchi" class="text-muted">{{ txn.created_by.get_full_name|default:"-" }}</td>
+                    <td data-label="Harakat">
+                        <a href="{% url 'transaction_invoice' txn.id %}" target="_blank" class="btn btn-sm btn-outline"
+                            style="padding:4px 8px; font-size:12px;">🖨️ Chek</a>
+                    </td>
+                </tr>
+                {% empty %}
+                <tr>
+                    <td colspan="10">
+                        <div class="empty-state">
+                            <div class="icon">🔄</div>
+                            <h3>Tranzaksiyalar topilmadi</h3>
+                            <a href="{% url 'transaction_create' %}" class="btn btn-primary mt-16">+ Yangi
+                                tranzaksiya</a>
+                        </div>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+
+    {% if transactions.has_other_pages %}
+    <div class="card-footer">
+        <div class="pagination">
+            {% if transactions.has_previous %}
+            <a
+                href="?page={{ transactions.previous_page_number }}&type={{ selected_type }}&warehouse={{ selected_warehouse }}">←
+                Oldingi</a>
+            {% endif %}
+            {% for num in transactions.paginator.page_range %}
+            {% if transactions.number == num %}
+            <span class="current">{{ num }}</span>
+            {% elif num > transactions.number|add:'-3' and num < transactions.number|add:'3' %} <a
+                href="?page={{ num }}&type={{ selected_type }}&warehouse={{ selected_warehouse }}">{{ num }}</a>
+                {% endif %}
+                {% endfor %}
+                {% if transactions.has_next %}
+                <a
+                    href="?page={{ transactions.next_page_number }}&type={{ selected_type }}&warehouse={{ selected_warehouse }}">Keyingi
+                    →</a>
+                {% endif %}
+        </div>
+    </div>
+    {% endif %}
+</div>
+{% endblock %}

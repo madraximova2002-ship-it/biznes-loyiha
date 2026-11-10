@@ -1,0 +1,337 @@
+{% extends "base.html" %}
+{% load humanize %}
+{% load core_tags %}
+
+{% block content %}
+<!-- KPI CARDS -->
+<div class="kpi-grid stagger">
+    <div class="kpi-card primary">
+        <div class="kpi-header">
+            <div class="kpi-icon">💰</div>
+        </div>
+        <div class="kpi-label">Umumiy ombor qiymati</div>
+        <div class="kpi-value">{{ total_value|floatformat:0|intcomma }} <small
+                style="font-size:14px; font-weight:400;">so'm</small></div>
+    </div>
+
+    <div class="kpi-card success">
+        <div class="kpi-header">
+            <div class="kpi-icon">📦</div>
+        </div>
+        <div class="kpi-label">Mahsulotlar soni</div>
+        <div class="kpi-value">{{ total_products|intcomma }}</div>
+    </div>
+
+    <div class="kpi-card info">
+        <div class="kpi-header">
+            <div class="kpi-icon">🏭</div>
+        </div>
+        <div class="kpi-label">Faol omborlar</div>
+        <div class="kpi-value">{{ total_warehouses }}</div>
+    </div>
+
+    <div class="kpi-card warning">
+        <div class="kpi-header">
+            <div class="kpi-icon">🔄</div>
+        </div>
+        <div class="kpi-label">Bugungi tranzaksiyalar</div>
+        <div class="kpi-value">{{ today_transactions }}</div>
+    </div>
+
+    <div class="kpi-card danger">
+        <div class="kpi-header">
+            <div class="kpi-icon">⚠️</div>
+        </div>
+        <div class="kpi-label">Minimal zaxiradan past</div>
+        <div class="kpi-value">{{ low_stock_count }}</div>
+    </div>
+
+    <div class="kpi-card accent">
+        <div class="kpi-header">
+            <div class="kpi-icon">🐌</div>
+        </div>
+        <div class="kpi-label">Sekin aylanuvchi mollar</div>
+        <div class="kpi-value">{{ slow_count }}</div>
+    </div>
+
+    <div class="kpi-card danger">
+        <div class="kpi-header">
+            <div class="kpi-icon">📅</div>
+        </div>
+        <div class="kpi-label">Yaroqlilik muddati tugayotgan</div>
+        <div class="kpi-value">{{ expiring_count }}</div>
+    </div>
+</div>
+
+<!-- CHARTS ROW -->
+<div class="grid-2 mb-24">
+    <div class="card animate-fadeInUp">
+        <div class="card-header">
+            <h3 class="card-title">📈 30 kunlik kirim-chiqim harakati</h3>
+        </div>
+        <div class="chart-container">
+            <canvas id="dailyChart"></canvas>
+        </div>
+    </div>
+
+    <div class="card animate-fadeInUp">
+        <div class="card-header">
+            <h3 class="card-title">🏆 Eng ko'p sotilgan mahsulotlar</h3>
+        </div>
+        <div class="chart-container">
+            <canvas id="topProductsChart"></canvas>
+        </div>
+    </div>
+</div>
+
+<div class="grid-2 mb-24">
+    <div class="card animate-fadeInUp">
+        <div class="card-header">
+            <h3 class="card-title">🏭 Filiallar bo'yicha qiymat</h3>
+        </div>
+        <div class="chart-container">
+            <canvas id="warehouseChart"></canvas>
+        </div>
+    </div>
+
+    <!-- LOW STOCK ALERTS -->
+    <div class="card animate-fadeInUp">
+        <div class="card-header">
+            <h3 class="card-title">🚨 Kam qolgan mahsulotlar</h3>
+        </div>
+        <div class="card-body" style="max-height:300px; overflow-y:auto;">
+            {% if low_stock_products %}
+            <table class="data-table">
+                <thead>
+                    <tr>
+                        <th>Mahsulot</th>
+                        <th>Ombor</th>
+                        <th>Qoldiq</th>
+                        <th>Min</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for stock in low_stock_products %}
+                    <tr>
+                        <td data-label="Mahsulot"><span class="stock-dot danger"></span> {{
+                            stock.product.name|truncatechars:30 }}</td>
+                        <td data-label="Ombor">{{ stock.warehouse.name }}</td>
+                        <td data-label="Qoldiq"><strong class="text-danger">{{ stock.quantity }}</strong></td>
+                        <td data-label="Min">{{ stock.product.min_stock }}</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+            {% else %}
+            <div class="empty-state">
+                <div class="icon">✅</div>
+                <h3>Hammasi joyida!</h3>
+                <p>Barcha mahsulotlar minimal zaxiradan yuqori</p>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+
+    <!-- EXPIRING PRODUCTS ALERTS -->
+    <div class="card animate-fadeInUp">
+        <div class="card-header">
+            <h3 class="card-title">📅 Yaroqlilik muddati tugayotganlar</h3>
+        </div>
+        <div class="card-body" style="max-height:300px; overflow-y:auto;">
+            {% if expiring_products %}
+            <table class="data-table">
+                <thead>
+                    <tr>
+                        <th>Mahsulot</th>
+                        <th>Yaroqlilik sanasi</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for p in expiring_products %}
+                    <tr>
+                        <td data-label="Mahsulot"><span class="stock-dot danger"></span> {{ p.name|truncatechars:30 }}
+                        </td>
+                        <td data-label="Yaroqlilik sanasi"><strong class="text-danger">{{ p.expire_date|date:"d.m.Y"
+                                }}</strong></td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+            {% else %}
+            <div class="empty-state">
+                <div class="icon">✅</div>
+                <h3>Hammasi joyida!</h3>
+                <p>Yaqin orada yaroqliligi tugaydigan mahsulotlar yo'q</p>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+
+<!-- RECENT TRANSACTIONS -->
+<div class="card animate-fadeInUp">
+    <div class="card-header">
+        <h3 class="card-title">🕐 Oxirgi tranzaksiyalar</h3>
+        <a href="{% url 'transaction_list' %}" class="btn btn-outline btn-sm">Barchasini ko'rish →</a>
+    </div>
+    <div class="table-container">
+        <table class="data-table">
+            <thead>
+                <tr>
+                    <th>Sana</th>
+                    <th>Turi</th>
+                    <th>Mahsulot</th>
+                    <th>Ombor</th>
+                    <th>Miqdor</th>
+                    <th>Summa</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for txn in recent_transactions %}
+                <tr>
+                    <td data-label="Sana">{{ txn.created_at|date:"d.m.Y H:i" }}</td>
+                    <td data-label="Turi">
+                        {% if txn.transaction_type == 'in' %}
+                        <span class="badge badge-success">↓ Kirim</span>
+                        {% elif txn.transaction_type == 'out' %}
+                        <span class="badge badge-danger">↑ Chiqim</span>
+                        {% else %}
+                        <span class="badge badge-info">⇄ Transfer</span>
+                        {% endif %}
+                    </td>
+                    <td data-label="Mahsulot">{{ txn.product.name|truncatechars:30 }}</td>
+                    <td data-label="Ombor">{{ txn.warehouse.name }}</td>
+                    <td data-label="Miqdor"><strong>{{ txn.quantity|intcomma }}</strong></td>
+                    <td data-label="Summa">{{ txn.total_price|floatformat:0|intcomma }} so'm</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    const dailyData = {{ daily_data_json| safe }};
+    const topProducts = {{ top_products_json| safe }};
+    const warehouseValues = {{ warehouse_values_json| safe }};
+
+    // Color palette
+    const colors = {
+        primary: '#6366f1',
+        primaryLight: 'rgba(99, 102, 241, 0.15)',
+        success: '#10b981',
+        successLight: 'rgba(16, 185, 129, 0.15)',
+        danger: '#ef4444',
+        dangerLight: 'rgba(239, 68, 68, 0.15)',
+        warning: '#f59e0b',
+        info: '#3b82f6',
+        accent: '#06b6d4',
+    };
+
+    const chartDefaults = {
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: {
+            legend: {
+                labels: { font: { family: 'Inter', size: 12 }, padding: 16 }
+            }
+        },
+        scales: {
+            x: {
+                grid: { display: false },
+                ticks: { font: { family: 'Inter', size: 11 } }
+            },
+            y: {
+                grid: { color: 'rgba(0,0,0,0.04)' },
+                ticks: { font: { family: 'Inter', size: 11 } }
+            }
+        }
+    };
+
+    // Daily In/Out Chart
+    new Chart(document.getElementById('dailyChart'), {
+        type: 'line',
+        data: {
+            labels: dailyData.map(d => d.date),
+            datasets: [
+                {
+                    label: 'Kirim',
+                    data: dailyData.map(d => d.in),
+                    borderColor: colors.success,
+                    backgroundColor: colors.successLight,
+                    fill: true,
+                    tension: 0.4,
+                    borderWidth: 2,
+                    pointRadius: 0,
+                    pointHoverRadius: 5,
+                },
+                {
+                    label: 'Chiqim',
+                    data: dailyData.map(d => d.out),
+                    borderColor: colors.danger,
+                    backgroundColor: colors.dangerLight,
+                    fill: true,
+                    tension: 0.4,
+                    borderWidth: 2,
+                    pointRadius: 0,
+                    pointHoverRadius: 5,
+                }
+            ]
+        },
+        options: chartDefaults
+    });
+
+    // Top Products Chart
+    new Chart(document.getElementById('topProductsChart'), {
+        type: 'bar',
+        data: {
+            labels: topProducts.map(p => p.product__name ? p.product__name.substring(0, 20) : ''),
+            datasets: [{
+                label: 'Sotilgan miqdor',
+                data: topProducts.map(p => p.total),
+                backgroundColor: [
+                    colors.primary, colors.success, colors.accent, colors.warning, colors.info,
+                    '#8b5cf6', '#ec4899', '#14b8a6', '#f97316', '#64748b'
+                ],
+                borderRadius: 8,
+                borderSkipped: false,
+            }]
+        },
+        options: {
+            ...chartDefaults,
+            indexAxis: 'y',
+            plugins: { ...chartDefaults.plugins, legend: { display: false } }
+        }
+    });
+
+    // Warehouse Values Chart
+    new Chart(document.getElementById('warehouseChart'), {
+        type: 'doughnut',
+        data: {
+            labels: warehouseValues.map(w => w.name),
+            datasets: [{
+                data: warehouseValues.map(w => w.value),
+                backgroundColor: [
+                    colors.primary, colors.success, colors.accent, colors.warning,
+                    colors.info, '#8b5cf6', '#ec4899', '#14b8a6'
+                ],
+                borderWidth: 0,
+                hoverOffset: 10,
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            cutout: '65%',
+            plugins: {
+                legend: {
+                    position: 'bottom',
+                    labels: { font: { family: 'Inter', size: 12 }, padding: 16, usePointStyle: true }
+                }
+            }
+        }
+    });
+</script>
+{% endblock %}

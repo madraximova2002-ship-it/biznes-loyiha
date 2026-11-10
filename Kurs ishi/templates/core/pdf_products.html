@@ -1,0 +1,80 @@
+<html>
+
+<head>
+    <meta charset="utf-8">
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            font-size: 12px;
+        }
+
+        h1 {
+            color: #4f46e5;
+            font-size: 20px;
+            border-bottom: 2px solid #4f46e5;
+            padding-bottom: 8px;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 16px;
+        }
+
+        th {
+            background: #4f46e5;
+            color: white;
+            padding: 8px 12px;
+            text-align: left;
+            font-size: 11px;
+        }
+
+        td {
+            padding: 8px 12px;
+            border-bottom: 1px solid #e2e8f0;
+            font-size: 11px;
+        }
+
+        tr:nth-child(even) {
+            background: #f8fafc;
+        }
+
+        .footer {
+            margin-top: 24px;
+            text-align: center;
+            color: #94a3b8;
+            font-size: 10px;
+        }
+    </style>
+</head>
+
+<body>
+    <h1>📋 Mahsulotlar hisoboti</h1>
+    <table>
+        <thead>
+            <tr>
+                <th>SKU</th>
+                <th>Nomi</th>
+                <th>Kategoriya</th>
+                <th>Narxi</th>
+                <th>Zaxira</th>
+                <th>Min</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for p in products %}
+            <tr>
+                <td>{{ p.sku }}</td>
+                <td>{{ p.name }}</td>
+                <td>{{ p.category.name|default:"-" }}</td>
+                <td>{{ p.price|floatformat:0 }}</td>
+                <td>{{ p.total_stock }}</td>
+                <td>{{ p.min_stock }}</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+    <div class="footer">OmborTizim © 2026 — Hisobot</div>
+</body>
+
+</html>

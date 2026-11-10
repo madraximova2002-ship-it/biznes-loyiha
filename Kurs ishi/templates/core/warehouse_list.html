@@ -1,0 +1,78 @@
+{% extends "base.html" %}
+{% load humanize %}
+{% load core_tags %}
+
+{% block content %}
+<div class="toolbar">
+    <div class="toolbar-left">
+        <h2 style="font-weight:700;">🏭 Omborlar ro'yxati</h2>
+    </div>
+    <div class="toolbar-right">
+        {% if request.user|has_role:"admin,manager" %}
+        <a href="{% url 'warehouse_create' %}" class="btn btn-primary">+ Yangi ombor</a>
+        {% endif %}
+    </div>
+</div>
+
+<div class="kpi-grid stagger">
+    {% for wh in warehouses %}
+    <div class="card" style="cursor:pointer;">
+        <div class="card-body">
+            <div class="flex-between mb-16">
+                <div>
+                    <h3 style="font-size:18px; font-weight:700;">{{ wh.name }}</h3>
+                    <p class="text-muted" style="font-size:13px;">{{ wh.address|default:"Manzil ko'rsatilmagan" }}</p>
+                </div>
+                {% if wh.is_active %}
+                <span class="badge badge-success">Faol</span>
+                {% else %}
+                <span class="badge badge-secondary">Nofaol</span>
+                {% endif %}
+            </div>
+
+            <div style="display:grid; grid-template-columns:1fr 1fr; gap:16px; margin-top:20px;">
+                <div>
+                    <div class="text-muted" style="font-size:11px; text-transform:uppercase; letter-spacing:0.5px;">
+                        Ombor qiymati</div>
+                    <div style="font-size:18px; font-weight:700; color:var(--primary);">{{ wh.total_val|floatformat:0|intcomma }} <small>so'm</small></div>
+                </div>
+                <div>
+                    <div class="text-muted" style="font-size:11px; text-transform:uppercase; letter-spacing:0.5px;">
+                        Mahsulotlar</div>
+                    <div style="font-size:18px; font-weight:700;">{{ wh.product_count }}</div>
+                </div>
+            </div>
+
+            {% if wh.manager %}
+            <div style="margin-top:16px; padding-top:16px; border-top:1px solid var(--border);">
+                <span class="text-muted" style="font-size:12px;">👤 Mudir:</span>
+                <span style="font-size:13px; font-weight:500;">{{ wh.manager.get_full_name|default:wh.manager.username }}</span>
+            </div>
+            {% endif %}
+
+            <div class="action-btns" style="margin-top:16px;">
+                {% if request.user|has_role:"admin,manager" %}
+                <a href="{% url 'warehouse_edit' wh.pk %}" class="btn btn-outline btn-sm">✏️ Tahrirlash</a>
+                {% endif %}
+                {% if request.user|has_role:"admin" %}
+                <form method="post" action="{% url 'warehouse_delete' wh.pk %}" style="display:inline;"
+                    onsubmit="return confirm('Haqiqatan ham o\'chirmoqchimisiz?')">
+                    {% csrf_token %}
+                    <button type="submit" class="btn btn-ghost btn-sm text-danger">🗑️</button>
+                </form>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+    {% empty %}
+    <div class="card" style="grid-column: 1 / -1;">
+        <div class="empty-state">
+            <div class="icon">🏭</div>
+            <h3>Omborlar topilmadi</h3>
+            <p>Yangi ombor yaratish uchun tugmani bosing</p>
+            <a href="{% url 'warehouse_create' %}" class="btn btn-primary">+ Yangi ombor</a>
+        </div>
+    </div>
+    {% endfor %}
+</div>
+{% endblock %}

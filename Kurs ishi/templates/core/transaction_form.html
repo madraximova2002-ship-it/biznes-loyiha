@@ -1,0 +1,70 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="card form-card animate-fadeInUp">
+    <div class="card-header">
+        <h3 class="card-title">🔄 Yangi tranzaksiya</h3>
+    </div>
+    <div class="card-body">
+        <form method="post">
+            {% csrf_token %}
+            <div class="form-row">
+                <div class="form-group">
+                    <label class="form-label">Tranzaksiya turi</label>
+                    {{ form.transaction_type }}
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Mahsulot</label>
+                    {{ form.product }}
+                </div>
+            </div>
+            <div class="form-row">
+                <div class="form-group">
+                    <label class="form-label">Ombor</label>
+                    {{ form.warehouse }}
+                </div>
+                <div class="form-group" id="target_warehouse_group">
+                    <label class="form-label">Manzil ombor (Transfer uchun)</label>
+                    {{ form.target_warehouse }}
+                </div>
+            </div>
+            <div class="form-row">
+                <div class="form-group">
+                    <label class="form-label">Miqdor</label>
+                    {{ form.quantity }}
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Birlik narxi (so'm)</label>
+                    {{ form.unit_price }}
+                </div>
+            </div>
+            <div class="form-group">
+                <label class="form-label">Izoh</label>
+                {{ form.note }}
+            </div>
+            {% for field in form %}
+            {% if field.errors %}
+            <div class="alert alert-error">{{ field.label }}: {{ field.errors.0 }}</div>
+            {% endif %}
+            {% endfor %}
+            <div class="flex gap-12" style="margin-top:24px;">
+                <button type="submit" class="btn btn-primary">✅ Amalga oshirish</button>
+                <a href="{% url 'transaction_list' %}" class="btn btn-outline">← Bekor qilish</a>
+            </div>
+        </form>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    // Show/hide target warehouse based on transaction type
+    const typeSelect = document.getElementById('id_transaction_type');
+    const targetGroup = document.getElementById('target_warehouse_group');
+    function toggleTarget() {
+        targetGroup.style.display = typeSelect.value === 'transfer' ? 'block' : 'none';
+    }
+    typeSelect.addEventListener('change', toggleTarget);
+    toggleTarget();
+</script>
+{% endblock %}

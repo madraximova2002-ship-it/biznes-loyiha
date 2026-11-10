@@ -1,0 +1,51 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="uz">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Kirish — OmborTizim</title>
+    <link rel="stylesheet" href="{% static 'css/style.css' %}">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap"
+        rel="stylesheet">
+</head>
+
+<body>
+    <div class="login-page">
+        <div class="login-card animate-scaleIn">
+            <div class="login-logo">
+                <div class="logo-icon">📦</div>
+                <h1>OmborTizim</h1>
+                <p>Ombor resurslarini hisobga olish va tahlil qilish</p>
+            </div>
+
+            {% if messages %}
+            {% for message in messages %}
+            <div class="alert alert-{{ message.tags }}" style="margin-bottom:20px;">{{ message }}</div>
+            {% endfor %}
+            {% endif %}
+
+            <form method="post" class="login-form">
+                {% csrf_token %}
+                <div class="form-group">
+                    <label class="form-label">👤 Foydalanuvchi nomi</label>
+                    {{ form.username }}
+                </div>
+                <div class="form-group">
+                    <label class="form-label">🔒 Parol</label>
+                    {{ form.password }}
+                </div>
+                <button type="submit" class="btn btn-primary btn-lg">
+                    Tizimga kirish →
+                </button>
+            </form>
+
+            <div style="text-align:center; margin-top:24px; color:#64748b; font-size:12px;">
+                © 2026 OmborTizim — Axborot tizimi
+            </div>
+        </div>
+    </div>
+</body>
+
+</html>

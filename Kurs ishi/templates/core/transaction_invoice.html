@@ -1,0 +1,206 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <title>{{ page_title }}</title>
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            background: #f3f4f6;
+            color: #1f2937;
+            display: flex;
+            justify-content: center;
+            padding: 40px;
+        }
+
+        .invoice-box {
+            max-width: 800px;
+            margin: auto;
+            padding: 30px;
+            border: 1px solid #eee;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.15);
+            font-size: 16px;
+            line-height: 24px;
+            font-family: 'Helvetica Neue', 'Helvetica', Helvetica, Arial, sans-serif;
+            color: #555;
+            background: #fff;
+            width: 100%;
+        }
+
+        .invoice-box table {
+            width: 100%;
+            line-height: inherit;
+            text-align: left;
+            border-collapse: collapse;
+        }
+
+        .invoice-box table td {
+            padding: 5px;
+            vertical-align: top;
+        }
+
+        .invoice-box table tr td:nth-child(2) {
+            text-align: right;
+        }
+
+        .invoice-box table tr.top table td {
+            padding-bottom: 20px;
+        }
+
+        .invoice-box table tr.top table td.title {
+            font-size: 45px;
+            line-height: 45px;
+            color: #333;
+        }
+
+        .invoice-box table tr.information table td {
+            padding-bottom: 40px;
+        }
+
+        .invoice-box table tr.heading td {
+            background: #eee;
+            border-bottom: 1px solid #ddd;
+            font-weight: bold;
+        }
+
+        .invoice-box table tr.details td {
+            padding-bottom: 20px;
+        }
+
+        .invoice-box table tr.item td {
+            border-bottom: 1px solid #eee;
+        }
+
+        .invoice-box table tr.item.last td {
+            border-bottom: none;
+        }
+
+        .invoice-box table tr.total td:nth-child(2) {
+            border-top: 2px solid #eee;
+            font-weight: bold;
+        }
+
+        @media only print {
+            body {
+                padding: 0;
+                background: #fff;
+            }
+
+            .invoice-box {
+                box-shadow: none;
+                border: 0;
+            }
+
+            @page {
+                margin: 0;
+            }
+        }
+
+        .print-btn {
+            display: block;
+            margin: 20px auto;
+            padding: 10px 20px;
+            background: #4f46e5;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            font-size: 16px;
+            cursor: pointer;
+            text-align: center;
+        }
+
+        @media print {
+            .print-btn {
+                display: none;
+            }
+        }
+    </style>
+</head>
+
+<body>
+    <div>
+        <button class="print-btn" onclick="window.print()">Chekni chop etish (PDF qilib saqlash)</button>
+        <div class="invoice-box">
+            <table cellpadding="0" cellspacing="0">
+                <tr class="top">
+                    <td colspan="2">
+                        <table>
+                            <tr>
+                                <td class="title">
+                                    <h2 style="margin:0; font-size:28px;">INVOYS</h2>
+                                </td>
+                                <td>
+                                    Tranzaksiya #: {{ txn.id }}<br />
+                                    Sana: {{ txn.created_at|date:"d.m.Y H:i" }}<br />
+                                </td>
+                            </tr>
+                        </table>
+                    </td>
+                </tr>
+
+                <tr class="information">
+                    <td colspan="2">
+                        <table>
+                            <tr>
+                                <td>
+                                    Omborxona Boshqaruv Tizimi<br />
+                                    Toshkent shahri<br />
+                                    Telefon: +998 90 123 45 67
+                                </td>
+                                <td>
+                                    Ombor: <strong>{{ txn.warehouse.name }}</strong><br />
+                                    Xodim: {{ txn.created_by.get_full_name|default:txn.created_by.username }}
+                                </td>
+                            </tr>
+                        </table>
+                    </td>
+                </tr>
+
+                <tr class="heading">
+                    <td>Tranzaksiya Tafsilotlari</td>
+                    <td></td>
+                </tr>
+
+                <tr class="details">
+                    <td>Tranzaksiya Turi</td>
+                    <td>{{ txn.get_transaction_type_display }}</td>
+                </tr>
+
+                <tr class="heading">
+                    <td>Mahsulot</td>
+                    <td>Narx, Miqdor va Summa</td>
+                </tr>
+
+                <tr class="item">
+                    <td>
+                        {{ txn.product.name }} <br>
+                        <small>SKU: {{ txn.product.sku }}</small>
+                    </td>
+                    <td>
+                        {{ txn.quantity }} {{ txn.product.unit }} x {{
+                        txn.unit_price|default:txn.product.price|floatformat:0 }} so'm
+                    </td>
+                </tr>
+                {% if txn.target_warehouse %}
+                <tr class="item">
+                    <td>Manzil Ombor (Transfer)</td>
+                    <td>{{ txn.target_warehouse.name }}</td>
+                </tr>
+                {% endif %}
+                <tr class="item last">
+                    <td>Izoh</td>
+                    <td>{{ txn.note|default:"-" }}</td>
+                </tr>
+
+                <tr class="total">
+                    <td></td>
+                    <td>Umumiy Qiymat: {% widthratio txn.quantity 1 txn.unit_price|default:txn.product.price %} so'm
+                    </td>
+                </tr>
+            </table>
+        </div>
+    </div>
+</body>
+
+</html>

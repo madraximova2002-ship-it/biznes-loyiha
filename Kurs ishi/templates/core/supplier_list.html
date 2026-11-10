@@ -1,0 +1,78 @@
+{% extends "base.html" %}
+{% load humanize %}
+{% load core_tags %}
+
+{% block content %}
+<div class="toolbar">
+    <div class="toolbar-left">
+        <h2 style="font-weight:700;">🚚 Yetkazib beruvchilar</h2>
+    </div>
+    <div class="toolbar-right">
+        {% if request.user|has_role:"admin,manager" %}
+        <a href="{% url 'supplier_create' %}" class="btn btn-primary">+ Yangi yetkazib beruvchi</a>
+        {% endif %}
+    </div>
+</div>
+
+<div class="card animate-fadeInUp">
+    <div class="table-container">
+        <table class="data-table">
+            <thead>
+                <tr>
+                    <th>Nomi</th>
+                    <th>Aloqa shaxsi</th>
+                    <th>Telefon</th>
+                    <th>Email</th>
+                    <th>Mahsulotlar</th>
+                    <th>Holat</th>
+                    <th>Amallar</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for supplier in suppliers %}
+                <tr>
+                    <td data-label="Nomi" style="font-weight:600;">{{ supplier.name }}</td>
+                    <td data-label="Aloqa shaxsi">{{ supplier.contact_person|default:"-" }}</td>
+                    <td data-label="Telefon">{{ supplier.phone|default:"-" }}</td>
+                    <td data-label="Email">{{ supplier.email|default:"-" }}</td>
+                    <td data-label="Mahsulotlar"><span class="badge badge-primary">{{ supplier.product_count }}</span>
+                    </td>
+                    <td data-label="Holat">
+                        {% if supplier.is_active %}
+                        <span class="badge badge-success">Faol</span>
+                        {% else %}
+                        <span class="badge badge-secondary">Nofaol</span>
+                        {% endif %}
+                    </td>
+                    <td data-label="Amallar">
+                        <div class="action-btns mt-16 pt-16" style="border-top:1px solid var(--border);">
+                            {% if request.user|has_role:"admin,manager" %}
+                            <a href="{% url 'supplier_edit' supplier.pk %}" class="btn btn-outline btn-sm">✏️
+                                Tahrirlash</a>
+                            {% endif %}
+                            {% if request.user|has_role:"admin" %}
+                            <form method="post" action="{% url 'supplier_delete' supplier.pk %}" style="display:inline;"
+                                onsubmit="return confirm('O\'chirmoqchimisiz?')">
+                                {% csrf_token %}
+                                <button type="submit" class="btn btn-ghost btn-sm text-danger">🗑️ O'chirish</button>
+                            </form>
+                            {% endif %}
+                        </div>
+                    </td>
+                </tr>
+                {% empty %}
+                <tr>
+                    <td colspan="7">
+                        <div class="empty-state">
+                            <div class="icon">🚚</div>
+                            <h3>Yetkazib beruvchilar topilmadi</h3>
+                            <a href="{% url 'supplier_create' %}" class="btn btn-primary mt-16">+ Yangi</a>
+                        </div>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endblock %}

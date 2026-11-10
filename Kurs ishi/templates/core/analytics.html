@@ -1,0 +1,239 @@
+{% extends "base.html" %}
+{% load humanize %}
+{% load core_tags %}
+
+{% block content %}
+<div class="toolbar">
+    <div class="toolbar-left">
+        <form method="get" class="flex gap-12">
+            <select name="warehouse" class="filter-select" onchange="this.form.submit()">
+                <option value="">Barcha omborlar</option>
+                {% for wh in warehouses %}
+                <option value="{{ wh.id }}" {% if selected_warehouse_id == wh.id %}selected{% endif %}>{{ wh.name }}
+                </option>
+                {% endfor %}
+            </select>
+        </form>
+    </div>
+</div>
+
+<!-- ABC & XYZ Charts -->
+<div class="grid-2 mb-24 stagger">
+    <div class="card">
+        <div class="card-header">
+            <h3 class="card-title">📊 ABC tahlil</h3>
+            <span class="badge badge-primary">Daromad ulushi</span>
+        </div>
+        <div class="chart-container">
+            <canvas id="abcChart"></canvas>
+        </div>
+    </div>
+    <div class="card">
+        <div class="card-header">
+            <h3 class="card-title">📊 XYZ tahlil</h3>
+            <span class="badge badge-info">Talab barqarorligi</span>
+        </div>
+        <div class="chart-container">
+            <canvas id="xyzChart"></canvas>
+        </div>
+    </div>
+</div>
+
+<!-- ABC Results Table -->
+<div class="card mb-24 animate-fadeInUp">
+    <div class="card-header">
+        <h3 class="card-title">📋 ABC tahlil natijalari</h3>
+    </div>
+    <div class="table-container">
+        <table class="data-table">
+            <thead>
+                <tr>
+                    <th>Mahsulot</th>
+                    <th>Daromad</th>
+                    <th>Kumulyativ %</th>
+                    <th>Guruh</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for item in abc_results %}
+                <tr>
+                    <td>{% if item.product %}{{ item.product.name|truncatechars:40 }}{% else %}#{{ item.product_id }}{% endif %}</td>
+                    <td>{{ item.revenue|floatformat:0|intcomma }} so'm</td>
+                    <td>{{ item.cumulative_pct }}%</td>
+                    <td>
+                        {% if item.category == 'A' %}<span class="badge badge-success">A</span>
+                        {% elif item.category == 'B' %}<span class="badge badge-warning">B</span>
+                        {% else %}<span class="badge badge-danger">C</span>{% endif %}
+                    </td>
+                </tr>
+                {% empty %}
+                <tr>
+                    <td colspan="4" class="text-center text-muted">Ma'lumotlar yetarli emas</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<!-- XYZ Results -->
+<div class="card mb-24 animate-fadeInUp">
+    <div class="card-header">
+        <h3 class="card-title">📋 XYZ tahlil natijalari</h3>
+    </div>
+    <div class="table-container">
+        <table class="data-table">
+            <thead>
+                <tr>
+                    <th>Mahsulot</th>
+                    <th>Variatsiya koeff. (CV%)</th>
+                    <th>Guruh</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for item in xyz_results %}
+                <tr>
+                    <td>{{ item.product_name|truncatechars:40 }}</td>
+                    <td>{{ item.cv }}%</td>
+                    <td>
+                        {% if item.category == 'X' %}<span class="badge badge-success">X</span>
+                        {% elif item.category == 'Y' %}<span class="badge badge-warning">Y</span>
+                        {% else %}<span class="badge badge-danger">Z</span>{% endif %}
+                    </td>
+                </tr>
+                {% empty %}
+                <tr>
+                    <td colspan="3" class="text-center text-muted">Ma'lumotlar yetarli emas</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<!-- Turnover -->
+<div class="card mb-24 animate-fadeInUp">
+    <div class="card-header">
+        <h3 class="card-title">🔄 Aylanish tezligi (Inventory Turnover)</h3>
+    </div>
+    <div class="table-container">
+        <table class="data-table">
+            <thead>
+                <tr>
+                    <th>Mahsulot</th>
+                    <th>Sotilgan tannarx</th>
+                    <th>O'rtacha zaxira qiymati</th>
+                    <th>Aylanish koeff.</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for item in turnover_results %}
+                <tr>
+                    <td>{{ item.product_name|truncatechars:40 }}</td>
+                    <td>{{ item.cogs|floatformat:0|intcomma }} so'm</td>
+                    <td>{{ item.avg_stock_value|floatformat:0|intcomma }} so'm</td>
+                    <td><strong
+                            class="{% if item.turnover > 5 %}text-success{% elif item.turnover > 2 %}text-warning{% else %}text-danger{% endif %}">{{
+                            item.turnover }}x</strong></td>
+                </tr>
+                {% empty %}
+                <tr>
+                    <td colspan="4" class="text-center text-muted">Ma'lumotlar yetarli emas</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<!-- Slow Moving & Frozen Capital -->
+<div class="grid-2 mb-24">
+    <div class="card">
+        <div class="card-header">
+            <h3 class="card-title">🐌 Sekin aylanuvchi mahsulotlar</h3>
+            <span class="badge badge-warning">60+ kun</span>
+        </div>
+        <div class="card-body" style="max-height:400px; overflow-y:auto;">
+            {% if slow_results %}
+            <table class="data-table">
+                <thead>
+                    <tr>
+                        <th>Mahsulot</th>
+                        <th>Qoldiq</th>
+                        <th>Muzlagan qiymat</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for item in slow_results %}
+                    <tr>
+                        <td>{{ item.product_name|truncatechars:30 }}</td>
+                        <td>{{ item.quantity }}</td>
+                        <td class="text-danger">{{ item.frozen_value|floatformat:0|intcomma }} so'm</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+            {% else %}
+            <div class="empty-state">
+                <div class="icon">✅</div>
+                <h3>Sekin aylanuvchi mol yo'q</h3>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+
+    <div class="card">
+        <div class="card-header">
+            <h3 class="card-title">🧊 Muzlagan kapital</h3>
+        </div>
+        <div class="card-body text-center">
+            <div style="font-size:48px; font-weight:800; color:var(--danger); margin-bottom:8px;">
+                {{ frozen.total_frozen_capital|floatformat:0|intcomma }}
+            </div>
+            <div class="text-muted mb-16">so'm muzlagan</div>
+            <div class="badge badge-danger" style="font-size:14px; padding:8px 16px;">
+                {{ frozen.count }} ta mahsulot
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    const abcData = {{ abc_chart_json| safe }};
+    const xyzData = {{ xyz_chart_json| safe }};
+
+    new Chart(document.getElementById('abcChart'), {
+        type: 'doughnut',
+        data: {
+            labels: ['A guruh', 'B guruh', 'C guruh'],
+            datasets: [{
+                data: [abcData.A, abcData.B, abcData.C],
+                backgroundColor: ['#10b981', '#f59e0b', '#ef4444'],
+                borderWidth: 0, hoverOffset: 8
+            }]
+        },
+        options: {
+            responsive: true, maintainAspectRatio: false, cutout: '60%',
+            plugins: { legend: { position: 'bottom', labels: { font: { family: 'Inter' }, padding: 16, usePointStyle: true } } }
+        }
+    });
+
+    new Chart(document.getElementById('xyzChart'), {
+        type: 'doughnut',
+        data: {
+            labels: ['X (barqaror)', 'Y (o\'rtacha)', 'Z (beqaror)'],
+            datasets: [{
+                data: [xyzData.X, xyzData.Y, xyzData.Z],
+                backgroundColor: ['#6366f1', '#06b6d4', '#f97316'],
+                borderWidth: 0, hoverOffset: 8
+            }]
+        },
+        options: {
+            responsive: true, maintainAspectRatio: false, cutout: '60%',
+            plugins: { legend: { position: 'bottom', labels: { font: { family: 'Inter' }, padding: 16, usePointStyle: true } } }
+        }
+    });
+</script>
+{% endblock %}

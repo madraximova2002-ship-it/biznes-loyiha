@@ -1,0 +1,52 @@
+{% extends "base.html" %}
+{% load humanize %}
+{% load core_tags %}
+
+{% block content %}
+<div class="toolbar">
+    <div class="toolbar-left">
+        <h2 style="font-weight:700;">🏷️ Kategoriyalar</h2>
+    </div>
+    <div class="toolbar-right">
+        {% if request.user|has_role:"admin,manager" %}
+        <a href="{% url 'category_create' %}" class="btn btn-primary">+ Yangi kategoriya</a>
+        {% endif %}
+    </div>
+</div>
+
+<div class="kpi-grid stagger">
+    {% for cat in categories %}
+    <div class="card">
+        <div class="card-body">
+            <div class="flex-between mb-8">
+                <h3 style="font-size:16px; font-weight:700;">🏷️ {{ cat.name }}</h3>
+                <span class="badge badge-primary">{{ cat.product_count }} mahsulot</span>
+            </div>
+            {% if cat.description %}
+            <p class="text-muted" style="font-size:13px; margin-bottom:16px;">{{ cat.description|truncatechars:80 }}</p>
+            {% endif %}
+            <div class="action-btns">
+                {% if request.user|has_role:"admin,manager" %}
+                <a href="{% url 'category_edit' cat.pk %}" class="btn btn-outline btn-sm">✏️ Tahrirlash</a>
+                {% endif %}
+                {% if request.user|has_role:"admin" %}
+                <form method="post" action="{% url 'category_delete' cat.pk %}" style="display:inline;"
+                    onsubmit="return confirm('O\'chirmoqchimisiz?')">
+                    {% csrf_token %}
+                    <button type="submit" class="btn btn-ghost btn-sm text-danger">🗑️</button>
+                </form>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+    {% empty %}
+    <div class="card" style="grid-column: 1 / -1;">
+        <div class="empty-state">
+            <div class="icon">🏷️</div>
+            <h3>Kategoriyalar topilmadi</h3>
+            <a href="{% url 'category_create' %}" class="btn btn-primary mt-16">+ Yangi kategoriya</a>
+        </div>
+    </div>
+    {% endfor %}
+</div>
+{% endblock %}

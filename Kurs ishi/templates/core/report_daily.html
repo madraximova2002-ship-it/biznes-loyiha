@@ -1,0 +1,66 @@
+{% extends "base.html" %}
+{% load humanize %}
+
+{% block content %}
+<div class="kpi-grid stagger mb-24">
+    <div class="kpi-card success">
+        <div class="kpi-label">Kirim</div>
+        <div class="kpi-value">{{ in_total.qty|default:0|intcomma }}</div>
+        <div class="text-muted mt-8" style="font-size:13px;">{{ in_total.val|default:0|floatformat:0|intcomma }} so'm
+        </div>
+    </div>
+    <div class="kpi-card danger">
+        <div class="kpi-label">Chiqim</div>
+        <div class="kpi-value">{{ out_total.qty|default:0|intcomma }}</div>
+        <div class="text-muted mt-8" style="font-size:13px;">{{ out_total.val|default:0|floatformat:0|intcomma }} so'm
+        </div>
+    </div>
+</div>
+
+<div class="card animate-fadeInUp">
+    <div class="card-header">
+        <h3 class="card-title">📅 {{ report_date|date:"d.m.Y" }} — Kunlik hisobot</h3>
+    </div>
+    <div class="table-container">
+        <table class="data-table">
+            <thead>
+                <tr>
+                    <th>Vaqt</th>
+                    <th>Turi</th>
+                    <th>Mahsulot</th>
+                    <th>Ombor</th>
+                    <th>Miqdor</th>
+                    <th>Jami</th>
+                    <th>Yaratuvchi</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for txn in transactions %}
+                <tr>
+                    <td>{{ txn.created_at|date:"H:i" }}</td>
+                    <td>
+                        {% if txn.transaction_type == 'in' %}<span class="badge badge-success">Kirim</span>
+                        {% elif txn.transaction_type == 'out' %}<span class="badge badge-danger">Chiqim</span>
+                        {% else %}<span class="badge badge-info">Transfer</span>{% endif %}
+                    </td>
+                    <td>{{ txn.product.name|truncatechars:30 }}</td>
+                    <td>{{ txn.warehouse.name }}</td>
+                    <td><strong>{{ txn.quantity|intcomma }}</strong></td>
+                    <td>{{ txn.total_price|floatformat:0|intcomma }} so'm</td>
+                    <td>{{ txn.created_by.get_full_name|default:"-" }}</td>
+                </tr>
+                {% empty %}
+                <tr>
+                    <td colspan="7">
+                        <div class="empty-state">
+                            <div class="icon">📅</div>
+                            <h3>Bugun tranzaksiya yo'q</h3>
+                        </div>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,39 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="grid-3 stagger">
+    <div class="card">
+        <div class="card-body text-center" style="padding:40px;">
+            <div style="font-size:48px; margin-bottom:16px;">📅</div>
+            <h3 style="font-weight:700; margin-bottom:8px;">Kunlik hisobot</h3>
+            <p class="text-muted mb-16">Bugungi barcha kirim va chiqim operatsiyalari</p>
+            <a href="{% url 'report_daily' %}" class="btn btn-primary">Ko'rish →</a>
+        </div>
+    </div>
+
+    <div class="card">
+        <div class="card-body text-center" style="padding:40px;">
+            <div style="font-size:48px; margin-bottom:16px;">📊</div>
+            <h3 style="font-weight:700; margin-bottom:8px;">Excel eksport</h3>
+            <p class="text-muted mb-16">Mahsulotlar yoki tranzaksiyalar ro'yxatini yuklab olish</p>
+            <div class="flex-center gap-8" style="flex-wrap:wrap;">
+                <a href="{% url 'export_excel' %}?type=products" class="btn btn-success btn-sm">📋 Mahsulotlar</a>
+                <a href="{% url 'export_excel' %}?type=transactions" class="btn btn-success btn-sm">🔄
+                    Tranzaksiyalar</a>
+            </div>
+        </div>
+    </div>
+
+    <div class="card">
+        <div class="card-body text-center" style="padding:40px;">
+            <div style="font-size:48px; margin-bottom:16px;">📄</div>
+            <h3 style="font-weight:700; margin-bottom:8px;">PDF eksport</h3>
+            <p class="text-muted mb-16">PDF formatda hisobotlarni yuklab olish</p>
+            <div class="flex-center gap-8" style="flex-wrap:wrap;">
+                <a href="{% url 'export_pdf' %}?type=products" class="btn btn-danger btn-sm">📋 Mahsulotlar</a>
+                <a href="{% url 'export_pdf' %}?type=transactions" class="btn btn-danger btn-sm">🔄 Tranzaksiyalar</a>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

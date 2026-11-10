@@ -1,0 +1,217 @@
+{% extends "base.html" %}
+{% load humanize %}
+{% load core_tags %}{% block content %}
+<div class="toolbar mb-24">
+    <div class="toolbar-left">
+        <form method="get" class="flex gap-12">
+            <select name="product" class="filter-select" onchange="this.form.submit()">
+                <option value="">Mahsulot tanlang...</option>
+                {% for p in products %}
+                <option value="{{ p.id }}" {% if selected_product and selected_product.id == p.id %}selected{% endif %}>{{ p.name }}</option>
+                {% endfor %}
+            </select>
+        </form>
+    </div>
+</div>
+
+{% if selected_product and forecast_data %}
+<h2 style="font-weight:700; margin-bottom:20px;">🔮 {{ selected_product.name }} — Prognoz</h2>
+
+<!-- Charts -->
+<div class="grid-2 mb-24 stagger">
+    <div class="card">
+        <div class="card-header">
+            <h3 class="card-title">📈 Moving Average (7 kun)</h3>
+            {% if forecast_data.ma_7.mape %}
+            <span class="badge badge-info">MAPE: {{ forecast_data.ma_7.mape }}%</span>
+            {% endif %}
+        </div>
+        <div class="chart-container">
+            <canvas id="ma7Chart"></canvas>
+        </div>
+    </div>
+    <div class="card">
+        <div class="card-header">
+            <h3 class="card-title">📈 Exponential Smoothing (7 kun)</h3>
+            {% if forecast_data.es_7.mape %}
+            <span class="badge badge-info">MAPE: {{ forecast_data.es_7.mape }}%</span>
+            {% endif %}
+        </div>
+        <div class="chart-container">
+            <canvas id="es7Chart"></canvas>
+        </div>
+    </div>
+</div>
+
+<!-- Tables -->
+<div class="grid-2 mb-24">
+    <div class="card">
+        <div class="card-header">
+            <h3 class="card-title">MA: 7 kunlik prognoz</h3>
+        </div>
+        <div class="card-body">
+            <table class="data-table">
+                <thead>
+                    <tr>
+                        <th>Sana</th>
+                        <th>Prognoz talabi</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for p in forecast_data.ma_7.predictions %}
+                    <tr>
+                        <td>{{ p.date|date:"d.m.Y" }}</td>
+                        <td><strong>{{ p.predicted }}</strong></td>
+                    </tr>
+                    {% empty %}
+                    <tr>
+                        <td colspan="2" class="text-muted text-center">Ma'lumot yo'q</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+    <div class="card">
+        <div class="card-header">
+            <h3 class="card-title">ES: 7 kunlik prognoz</h3>
+        </div>
+        <div class="card-body">
+            <table class="data-table">
+                <thead>
+                    <tr>
+                        <th>Sana</th>
+                        <th>Prognoz talabi</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for p in forecast_data.es_7.predictions %}
+                    <tr>
+                        <td>{{ p.date|date:"d.m.Y" }}</td>
+                        <td><strong>{{ p.predicted }}</strong></td>
+                    </tr>
+                    {% empty %}
+                    <tr>
+                        <td colspan="2" class="text-muted text-center">Ma'lumot yo'q</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+<!-- 30-day Forecasts -->
+<div class="grid-2 mb-24">
+    <div class="card">
+        <div class="card-header">
+            <h3 class="card-title">MA: 30 kunlik prognoz</h3>
+            {% if forecast_data.ma_30.mape %}
+            <span class="badge badge-warning">MAPE: {{ forecast_data.ma_30.mape }}%</span>
+            {% endif %}
+        </div>
+        <div class="card-body" style="max-height:300px; overflow-y:auto;">
+            <table class="data-table">
+                <thead>
+                    <tr>
+                        <th>Sana</th>
+                        <th>Prognoz</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for p in forecast_data.ma_30.predictions %}
+                    <tr>
+                        <td>{{ p.date|date:"d.m.Y" }}</td>
+                        <td><strong>{{ p.predicted }}</strong></td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+    <div class="card">
+        <div class="card-header">
+            <h3 class="card-title">ES: 30 kunlik prognoz</h3>
+            {% if forecast_data.es_30.mape %}
+            <span class="badge badge-warning">MAPE: {{ forecast_data.es_30.mape }}%</span>
+            {% endif %}
+        </div>
+        <div class="card-body" style="max-height:300px; overflow-y:auto;">
+            <table class="data-table">
+                <thead>
+                    <tr>
+                        <th>Sana</th>
+                        <th>Prognoz</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for p in forecast_data.es_30.predictions %}
+                    <tr>
+                        <td>{{ p.date|date:"d.m.Y" }}</td>
+                        <td><strong>{{ p.predicted }}</strong></td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+{% elif not selected_product %}
+<div class="card">
+    <div class="empty-state">
+        <div class="icon">🔮</div>
+        <h3>Mahsulot tanlang</h3>
+        <p>Prognoz ko'rish uchun yuqoridagi ro'yxatdan mahsulot tanlang</p>
+    </div>
+</div>
+{% endif %}
+{% endblock %}
+
+{% block extra_js %}
+{% if forecast_data %}
+<script>
+    const ma7Data = {{ ma7_chart_json| safe }};
+    const es7Data = {{ es7_chart_json| safe }};
+
+    const chartOpts = {
+        responsive: true, maintainAspectRatio: false,
+        plugins: { legend: { display: false } },
+        scales: {
+            x: { grid: { display: false }, ticks: { font: { family: 'Inter', size: 11 } } },
+            y: { grid: { color: 'rgba(0,0,0,0.04)' }, ticks: { font: { family: 'Inter', size: 11 } } }
+        }
+    };
+
+    new Chart(document.getElementById('ma7Chart'), {
+        type: 'line',
+        data: {
+            labels: ma7Data.map(d => d.date),
+            datasets: [{
+                label: 'MA Prognoz',
+                data: ma7Data.map(d => d.value),
+                borderColor: '#6366f1', backgroundColor: 'rgba(99,102,241,0.1)',
+                fill: true, tension: 0.4, borderWidth: 2, pointRadius: 4,
+                pointBackgroundColor: '#6366f1'
+            }]
+        },
+        options: chartOpts
+    });
+
+    new Chart(document.getElementById('es7Chart'), {
+        type: 'line',
+        data: {
+            labels: es7Data.map(d => d.date),
+            datasets: [{
+                label: 'ES Prognoz',
+                data: es7Data.map(d => d.value),
+                borderColor: '#06b6d4', backgroundColor: 'rgba(6,182,212,0.1)',
+                fill: true, tension: 0.4, borderWidth: 2, pointRadius: 4,
+                pointBackgroundColor: '#06b6d4'
+            }]
+        },
+        options: chartOpts
+    });
+</script>
+{% endif %}
+{% endblock %}
